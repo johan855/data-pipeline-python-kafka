@@ -40,17 +40,3 @@ sed -i -e '/broker.id/ s/0/1/' kafka_2.12-2.1.1/config/server.1.properties
 sed -i -e '/listeners=PLAINTEXT:\/\/:9092/ s/^#//' kafka_2.12-2.1.1/config/server.0.properties
 sed -i -e '/listeners=PLAINTEXT:\/\/:9092/ s/^#//' kafka_2.12-2.1.1/config/server.1.properties
 sed -i -e '/listeners/ s/PLAINTEXT:\/\/:9092/PLAINTEXT:\/\/:9093/' kafka_2.12-2.1.1/config/server.1.properties
-
-
-# Initiallize Zookeeper
-nohup zookeeper-server-start.sh kafka_2.12-2.1.1/config/zookeeper.properties &
-sleep 5
-# Start 2 Kafka brokers (General setup for 3 partitions, 2 brokers and rep. factor of 2 per topic)
-nohup kafka-server-start.sh kafka_2.12-2.1.1/config/server.0.properties &
-sleep 5
-nohup kafka-server-start.sh kafka_2.12-2.1.1/config/server.1.properties &
-
-
-# Create first topic (3 partitions and 2 as rep. factor)
-kafka-topics.sh --zookeeper localhost:2181 --topic first_topic --create --partitions 3 --replication-factor 2
-# Create consumer (after producer in python)
