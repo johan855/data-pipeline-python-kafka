@@ -6,7 +6,7 @@ pip install confluent-kafka
 # Download and unzip Kafka
 sudo apt install openjdk-8-jdk
 cd ~
-wget "http://www-eu.apache.org/dist/kafka/1.0.1/kafka_2.12-1.0.1.tgz"
+wget "https://www-us.apache.org/dist/kafka/2.2.0/kafka_2.12-2.2.0.tgz"
 tar -xvf kafka_2.12-1.0.1.tgz
 
 # Add Kafka to PATH
