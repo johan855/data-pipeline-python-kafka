@@ -11,7 +11,7 @@ from woocommerce import API
 from confluent_kafka import Producer
 from confluent_kafka import admin.AdminClient as admin
 
-sys.path.append(os.path.join('C:\\Users\\Johan\\PycharmProjects\\analytics-from-cloud\\kafka\\python_scripts'))
+sys.path.append(os.path.join('C:\\Users\\Johan\\PycharmProjects\\data-pipeline-python-kafka\\python_scripts'))
 
 import global_configuration
 from helpers import db_connection as db
