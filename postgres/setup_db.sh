@@ -2,7 +2,7 @@
 mkdir -p $HOME/docker/volumes/postgres
 
 docker run --rm --name pg-docker \
-           -e POSTGRES_PASSWORD=password \
+           -e POSTGRES_PASSWORD=postgrespassword \
            -d -p 127.0.0.1:5432:5432 \
            -v $HOME/docker/volumes/postgres:/var/lib/postgresql/data postgres
 
@@ -11,5 +11,5 @@ docker run --rm --name pg-docker \
 
 #Create login user and install phppg_admin
 docker exec --tty --interactive pg-docker /bin/bash
-su -c "psql -c \"CREATE USER johan855 WITH LOGIN PASSWORD 'password';\"" postgres
+su -c "psql -c \"CREATE USER postgresuser WITH LOGIN PASSWORD 'postgrespassword';\"" postgres
 
