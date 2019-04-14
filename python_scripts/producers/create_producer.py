@@ -14,6 +14,8 @@ from confluent_kafka import admin.AdminClient as admin
 sys.path.append(os.path.join('C:\\Users\\Johan\\PycharmProjects\\analytics-from-cloud\\kafka\\python_scripts'))
 
 import global_configuration
+from helpers import db_connection as db
+
 
 
 def delivery_report(err, msg):
@@ -32,13 +34,28 @@ def produce_data(list_of_orders):
         # Asynchronously produce a message, the delivery report callback
         # will be triggered from poll() above, or flush() below, when the message has
         # been successfully delivered or failed permanently.
-        p.produce('mytopic', data.encode('utf-8'), callback=delivery_report)
+        p.produce('woocommerce_orders', data.encode('utf-8'), callback=delivery_report)
         # Wait for any outstanding messages to be delivered and delivery report
         # callbacks to be triggered.
     p.flush()
 
 
-def get_orders():
+def get_last_updated_at():
+    con_yml_dict = {
+        'db_user': global_configuration.DwhPsql.db_user,
+        'db_passwd': global_configuration.DwhPsql.db_passwd,
+        'db_name': global_configuration.DwhPsql.db_name,
+        'db_host': global_configuration.DwhPsql.db_host
+    }
+
+    db_conn = db.DBconnection(config_path=con_yml_dict, schema='dwh_il')
+    session = db_conn.get_session()
+    query = """SELECT MAX(date_created) as date_created, MAX(date_modified) as date_modified
+               FROM woocommerce_en_de;"""
+    query_result = session.execute(query).fetchall()
+
+
+def get_woocommerce_orders():
     key = Woocommerce.consumer_key
     secret = Woocommerce.consumer_secret
     url = Woocommerce.url
@@ -49,13 +66,17 @@ def get_orders():
         timeout=10
     )
     response = ''
-    list_of_orders = []
+    list_new_orders = []
+    list_update_orders = []
     pages = 1
     for x in range(1, pages+1):
-        r = wcapi.get("orders?page={0}".format(x)).json()
-        for order in r:
-            list_of_orders.append(order)
-    return list_of_orders
+        r_new = wcapi.get("orders?page={0}&date_created_gmt={1}".format(x)).json()
+        r_update = wcapi.get("orders?page={0}&date_modified_gmt={1}".format(x)).json()
+        for new_order in r_new:
+            list_new_orders.append(new_order)
+        for update_order in r_update:
+            list_update_orders.append(update_order)
+    return list_of_orders, list_update_orders
 
 
 if __name__=='__main__':
@@ -65,7 +86,10 @@ if __name__=='__main__':
         while True:
             print('Sleeping for {0} seconds...'.format(sleep_time))
             time.sleep(sleep_time)
-            list_of_orders = get_orders()
+            list_of_orders = get_woocommerce_orders()
             produce_data(list_of_orders)
     except KeyboardInterrupt:
         pass
+
+## Things to improve ##
+# Make Woocommerce send request to Python script (Webhook on order create and update)
