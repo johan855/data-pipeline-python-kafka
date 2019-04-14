@@ -8,8 +8,10 @@ docker run --rm --name pg-docker \
 
 #To connect to PG without installing it on the current instance, run:
 #docker exec --tty --interactive pg-docker psql -h localhost -U postgres -d postgres
+#psql> create database main;
+#psql> create schema woocommerce_en_de;
 
 #Create login user and install phppg_admin
-docker exec --tty --interactive pg-docker /bin/bash
-su -c "psql -c \"CREATE USER postgresuser WITH LOGIN PASSWORD 'postgrespassword';\"" postgres
+#docker exec --tty --interactive pg-docker /bin/bash
+#su -c "psql -c \"CREATE USER postgresuser WITH LOGIN PASSWORD 'postgrespassword';\"" postgres
 

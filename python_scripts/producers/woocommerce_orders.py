@@ -9,12 +9,11 @@ import time
 import logging
 from woocommerce import API
 from confluent_kafka import Producer
-from confluent_kafka import admin.AdminClient as admin
 
-sys.path.append(os.path.join('C:\\Users\\Johan\\PycharmProjects\\data-pipeline-python-kafka\\python_scripts'))
+sys.path.append(os.path.join('/home/etl_montredo/data-pipeline-python-kafka'))
 
 import global_configuration
-from helpers import db_connection as db
+from python_scripts.database.woocommerce_tables import create_tables, session
 
 
 
@@ -41,31 +40,21 @@ def produce_data(list_of_orders):
 
 
 def get_last_updated_at():
-    con_yml_dict = {
-        'db_user': global_configuration.DwhPsql.db_user,
-        'db_passwd': global_configuration.DwhPsql.db_passwd,
-        'db_name': global_configuration.DwhPsql.db_name,
-        'db_host': global_configuration.DwhPsql.db_host
-    }
-
-    db_conn = db.DBconnection(config_path=con_yml_dict, schema='dwh_il')
-    session = db_conn.get_session()
     query = """SELECT MAX(date_created) as date_created, MAX(date_modified) as date_modified
-               FROM woocommerce_en_de;"""
+               FROM woocommerce_en_de.orders;"""
     query_result = session.execute(query).fetchall()
 
 
 def get_woocommerce_orders():
-    key = Woocommerce.consumer_key
-    secret = Woocommerce.consumer_secret
-    url = Woocommerce.url
+    key = global_configuration.Woocommerce.consumer_key
+    secret = global_configuration.Woocommerce.consumer_secret
+    url = global_configuration.Woocommerce.url
     wcapi = API(
         url=url,
         consumer_key=key,
         consumer_secret=secret,
         timeout=10
     )
-    response = ''
     list_new_orders = []
     list_update_orders = []
     pages = 1
@@ -80,6 +69,7 @@ def get_woocommerce_orders():
 
 
 if __name__=='__main__':
+    create_tables()
     p = Producer({'bootstrap.servers': 'localhost:9092,localhost:9093'})
     sleep_time = 3
     try:
