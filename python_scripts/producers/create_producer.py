@@ -25,19 +25,16 @@ def delivery_report(err, msg):
 
 
 def produce_data(list_of_orders):
-    produced_orders = [] #Remove
     for data in list_of_orders:
-        if data['id'] not in produced_orders: #Remove
-            produced_orders.append(data['id'])
-            # Trigger any available delivery report callbacks from previous produce() calls
-            p.poll(0)
-            # Asynchronously produce a message, the delivery report callback
-            # will be triggered from poll() above, or flush() below, when the message has
-            # been successfully delivered or failed permanently.
-            p.produce('wordpress_orders', ('Order '+str(data['id'])).encode('utf-8'), callback=delivery_report)
+        # Trigger any available delivery report callbacks from previous produce() calls
+        p.poll(0)
+        # Asynchronously produce a message, the delivery report callback
+        # will be triggered from poll() above, or flush() below, when the message has
+        # been successfully delivered or failed permanently.
+        p.produce('wordpress_orders', ('Order '+str(data['id'])).encode('utf-8'), callback=delivery_report)
         # Wait for any outstanding messages to be delivered and delivery report
         # callbacks to be triggered.
-        p.flush()
+    p.flush()
 
 
 def get_orders():
@@ -69,6 +66,5 @@ if __name__=='__main__':
             time.sleep(sleep_time)
             list_of_orders = get_orders()
             produce_data(list_of_orders)
-            print(list_of_orders)
     except KeyboardInterrupt:
         pass
