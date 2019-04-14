@@ -25,11 +25,11 @@ cp kafka_2.12-2.2.0/config/server.properties kafka_2.12-2.2.0/config/server.0.pr
 cp kafka_2.12-2.2.0/config/server.properties kafka_2.12-2.2.0/config/server.1.properties
 
 # Modify log folders
-sed -i -e '/dataDir/ s/\/tmp\/zookeeper/~\/kafka_2.12-2.2.0\/data\/zookeeper/' \
+sed -i -e '/dataDir/ s/\/tmp\/zookeeper/\/home\/etl_montredo\/kafka_2.12-2.2.0\/data\/zookeeper/' \
     kafka_2.12-2.2.0/config/zookeeper.properties
-sed -i -e '/dataDir/ s/\/tmp\/kafka-logs/~\/kafka_2.12-2.2.0\/data\/kafka0/' \
+sed -i -e '/log.dirs/ s/\/tmp\/kafka-logs/\/home\/etl_montredo\/kafka_2.12-2.2.0\/data\/kafka0/' \
     kafka_2.12-2.2.0/config/server.0.properties
-sed -i -e '/dataDir/ s/\/tmp\/kafka-logs/~\/kafka_2.12-2.2.0\/data\/kafka1/' \
+sed -i -e '/log.dirs/ s/\/tmp\/kafka-logs/\/home\/etl_montredo\/kafka_2.12-2.2.0\/data\/kafka1/' \
     kafka_2.12-2.2.0/config/server.1.properties
 
 # Modify broker.id in config files
@@ -39,3 +39,7 @@ sed -i -e '/broker.id/ s/0/1/' kafka_2.12-2.2.0/config/server.1.properties
 sed -i -e '/listeners=PLAINTEXT:\/\/:9092/ s/^#//' kafka_2.12-2.2.0/config/server.0.properties
 sed -i -e '/listeners=PLAINTEXT:\/\/:9092/ s/^#//' kafka_2.12-2.2.0/config/server.1.properties
 sed -i -e '/listeners/ s/PLAINTEXT:\/\/:9092/PLAINTEXT:\/\/:9093/' kafka_2.12-2.2.0/config/server.1.properties
+
+## Things to improve ##
+#  9 - Adapt to load always newest version of Kafka (implement version in variable instead of hardcoding it)
+# 28 - Make sed commands set $HOME as variable instead of hardcoding it

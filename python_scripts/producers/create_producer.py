@@ -9,6 +9,7 @@ import time
 import logging
 from woocommerce import API
 from confluent_kafka import Producer
+from confluent_kafka import admin.AdminClient as admin
 
 sys.path.append(os.path.join('C:\\Users\\Johan\\PycharmProjects\\analytics-from-cloud\\kafka\\python_scripts'))
 
@@ -31,7 +32,7 @@ def produce_data(list_of_orders):
         # Asynchronously produce a message, the delivery report callback
         # will be triggered from poll() above, or flush() below, when the message has
         # been successfully delivered or failed permanently.
-        p.produce('wordpress_orders', ('Order '+str(data['id'])).encode('utf-8'), callback=delivery_report)
+        p.produce('mytopic', data.encode('utf-8'), callback=delivery_report)
         # Wait for any outstanding messages to be delivered and delivery report
         # callbacks to be triggered.
     p.flush()

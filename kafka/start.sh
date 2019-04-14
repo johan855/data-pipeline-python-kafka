@@ -14,3 +14,6 @@ python ./create_producer.py
 
 # Create consumer
 python ./create_consumer.py
+
+## Things to improve ##
+# Make sure the nohup + & commands run properly
