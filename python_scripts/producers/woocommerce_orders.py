@@ -2,7 +2,6 @@
 #use github: https://github.com/confluentinc/confluent-kafka-python
 #https://www.confluent.io/blog/introduction-to-apache-kafka-for-python-programmers/
 #Learn about google proto buffs
-
 import os
 import sys
 import time
