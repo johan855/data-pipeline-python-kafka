@@ -25,8 +25,8 @@ def delivery_report(err, msg):
         print('Message delivered to {} [{}]'.format(msg.topic(), msg.partition()))
 
 
-def produce_data(list_of_orders):
-    for data in list_of_orders:
+def produce_data(list_all_orders):
+    for data in list_all_orders:
         # Trigger any available delivery report callbacks from previous produce() calls
         p.poll(0)
         # Asynchronously produce a message, the delivery report callback
@@ -42,6 +42,9 @@ def get_last_updated_at():
     query = """SELECT MAX(date_created) as date_created, MAX(date_modified) as date_modified
                FROM woocommerce_en_de.orders;"""
     query_result = session.execute(query).fetchall()
+    date_created = '2019-01-01' if query_result[0][0] == None else query_result[0][0]
+    date_updated = '2019-01-01' if query_result[0][0] == None else query_result[0][1]
+    return date_created, date_updated
 
 
 def get_woocommerce_orders():
@@ -54,17 +57,23 @@ def get_woocommerce_orders():
         consumer_secret=secret,
         timeout=10
     )
-    list_new_orders = []
-    list_update_orders = []
+    date_created, date_updated = get_last_updated_at()
+    dict_new_orders = {}
+    dict_update_orders = {}
     pages = 1
     for x in range(1, pages+1):
-        r_new = wcapi.get("orders?page={0}&date_created_gmt={1}".format(x)).json()
-        r_update = wcapi.get("orders?page={0}&date_modified_gmt={1}".format(x)).json()
+        delete-->r_new = wcapi.get("orders?after=2019-01-01T13:57:31.2311892-04:00").json()
+        r_new = wcapi.get("orders?per_page=100&page={0}&after={1}".format(x, date_created)).json()
+        #r_update = wcapi.get("orders?page={0}&after_update={1}".format(x, date_updated)).json()
         for new_order in r_new:
-            list_new_orders.append(new_order)
-        for update_order in r_update:
-            list_update_orders.append(update_order)
-    return list_of_orders, list_update_orders
+            dict_new_orders[new_order['id']] = {'created_at': new_order['created_at'],
+                                                'updated_at': new_order['updated_at']
+                                                }
+        #for update_order in r_update:
+        #    dict_update_orders[update_order['id']] = {'created_at': update_order['created_at'],
+        #                                        'updated_at': update_order['updated_at']
+        #                                        }
+    return dict_new_orders# + dict_update_orders
 
 
 if __name__=='__main__':
@@ -75,8 +84,8 @@ if __name__=='__main__':
         while True:
             print('Sleeping for {0} seconds...'.format(sleep_time))
             time.sleep(sleep_time)
-            list_of_orders = get_woocommerce_orders()
-            produce_data(list_of_orders)
+            list_all_orders = get_woocommerce_orders()
+            produce_data(list_all_orders)
     except KeyboardInterrupt:
         pass
 
