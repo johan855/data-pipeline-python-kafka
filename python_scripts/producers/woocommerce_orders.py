@@ -25,14 +25,14 @@ def delivery_report(err, msg):
         print('Message delivered to {} [{}]'.format(msg.topic(), msg.partition()))
 
 
-def produce_data(list_all_orders):
-    for data in list_all_orders:
+def produce_data(dict_new_orders):
+    for data in dict_new_orders:
         # Trigger any available delivery report callbacks from previous produce() calls
         p.poll(0)
         # Asynchronously produce a message, the delivery report callback
         # will be triggered from poll() above, or flush() below, when the message has
         # been successfully delivered or failed permanently.
-        p.produce('woocommerce_orders', data.encode('utf-8'), callback=delivery_report)
+        p.produce('woocommerce_orders', str(dict_new_orders[data]).encode('utf-8'), callback=delivery_report)
         # Wait for any outstanding messages to be delivered and delivery report
         # callbacks to be triggered.
     p.flush()
@@ -47,7 +47,7 @@ def get_last_updated_at():
     return date_created, date_updated
 
 
-def get_woocommerce_orders():
+def get_woocommerce_orders(date_created, date_updated):
     key = global_configuration.Woocommerce.consumer_key
     secret = global_configuration.Woocommerce.consumer_secret
     url = global_configuration.Woocommerce.url
@@ -57,33 +57,34 @@ def get_woocommerce_orders():
         consumer_secret=secret,
         timeout=10
     )
-    date_created, date_updated = get_last_updated_at()
     dict_new_orders = {}
-    dict_update_orders = {}
+    #dict_update_orders = {}
     pages = 1
     for x in range(1, pages+1):
         r_new = wcapi.get("orders?per_page=100&page={0}&after={1}".format(x, date_created)).json()
         #r_update = wcapi.get("orders?page={0}&after_update={1}".format(x, date_updated)).json()
         for new_order in r_new:
-            dict_new_orders[new_order['id']] = {'created_at': new_order['created_at'],
-                                                'updated_at': new_order['updated_at']
+            date_created = new_order['date_created'] if new_order['date_created'] >= date_created else date_created
+            dict_new_orders[new_order['id']] = {'created_at': new_order['date_created'],
+                                                #'updated_at': new_order['date_updated']
                                                 }
         #for update_order in r_update:
         #    dict_update_orders[update_order['id']] = {'created_at': update_order['created_at'],
         #                                        'updated_at': update_order['updated_at']
         #                                        }
-    return dict_new_orders# + dict_update_orders
+    return dict_new_orders, date_created# + dict_update_orders (set after dict_new_orders)
 
 
 if __name__=='__main__':
     create_tables()
     p = Producer({'bootstrap.servers': 'localhost:9092,localhost:9093'})
+    date_created, date_updated = get_last_updated_at()
     sleep_time = 3
     try:
         while True:
             print('Sleeping for {0} seconds...'.format(sleep_time))
             time.sleep(sleep_time)
-            dict_new_orders = get_woocommerce_orders()
+            dict_new_orders, date_created = get_woocommerce_orders(date_created, date_updated)
             produce_data(dict_new_orders)
     except KeyboardInterrupt:
         pass

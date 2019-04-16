@@ -13,6 +13,7 @@ kafka-topics.sh --zookeeper localhost:2181 --topic first_topic --create --partit
 python ./create_producer.py
 
 # Create consumer
+# kafka-console-consumer.sh --bootstrap-server localhost:9092 --topic woocommerce_orders
 python ./create_consumer.py
 
 ## Things to improve ##

@@ -33,8 +33,8 @@ class Orders(db_conn.get_base()):
     hash_id = Column(String(32), primary_key=True)
 
     order_id = Column(String(5))
-    date_created = Column(Numeric(scale=10, precision=18, asdecimal=True))
-    date_modified = Column(String(100))
+    date_created = Column(DateTime(timezone=False))
+    date_modified = Column(DateTime(timezone=False))
 
     dwh_created_at = Column(DateTime(timezone=False), default=db_conn.get_date())
     dwh_updated_at = Column(DateTime(timezone=False), onupdate=db_conn.get_date())
