@@ -42,8 +42,8 @@ def get_last_updated_at():
     query = """SELECT MAX(date_created) as date_created, MAX(date_modified) as date_modified
                FROM woocommerce_en_de.orders;"""
     query_result = session.execute(query).fetchall()
-    date_created = '2019-01-01' if query_result[0][0] == None else query_result[0][0]
-    date_updated = '2019-01-01' if query_result[0][0] == None else query_result[0][1]
+    date_created = '2019-01-01T00:00:00' if query_result[0][0] == None else query_result[0][0]
+    date_updated = '2019-01-01T00:00:00' if query_result[0][0] == None else query_result[0][1]
     return date_created, date_updated
 
 
@@ -62,7 +62,6 @@ def get_woocommerce_orders():
     dict_update_orders = {}
     pages = 1
     for x in range(1, pages+1):
-        delete-->r_new = wcapi.get("orders?after=2019-01-01T13:57:31.2311892-04:00").json()
         r_new = wcapi.get("orders?per_page=100&page={0}&after={1}".format(x, date_created)).json()
         #r_update = wcapi.get("orders?page={0}&after_update={1}".format(x, date_updated)).json()
         for new_order in r_new:
@@ -84,8 +83,8 @@ if __name__=='__main__':
         while True:
             print('Sleeping for {0} seconds...'.format(sleep_time))
             time.sleep(sleep_time)
-            list_all_orders = get_woocommerce_orders()
-            produce_data(list_all_orders)
+            dict_new_orders = get_woocommerce_orders()
+            produce_data(dict_new_orders)
     except KeyboardInterrupt:
         pass
 
