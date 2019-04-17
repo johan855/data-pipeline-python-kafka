@@ -47,13 +47,16 @@ def get_last_updated_at():
     return date_created, date_updated
 
 
-def get_orders_list():
+def get_orders_dict():
+    orders_dict = {}
     query_orders_list = """SELECT * FROM woocommerce_en_de.orders;"""
     query_orders_list_result = session.execute(query_orders_list).fetchall()
     orders_list = query_orders_list_result[0]
-    return orders_list
+    for x in orders_list:
+        orders_dict[x[0]]=x # Index has to be order_id
+    return orders_dict
 
-def get_woocommerce_orders(date_created, date_updated):
+def get_woocommerce_orders(date_created, date_updated, orders_dict):
     key = global_configuration.Woocommerce.consumer_key
     secret = global_configuration.Woocommerce.consumer_secret
     url = global_configuration.Woocommerce.url
@@ -75,9 +78,10 @@ def get_woocommerce_orders(date_created, date_updated):
                                                 'updated_at': new_order['date_updated']
                                                 }
         for update_order in r_update:
-            dict_update_orders[update_order['id']] = {'created_at': update_order['created_at'],
-                                                'updated_at': update_order['updated_at']
-                                                }
+            if orders_dict[update_order['id']]['dwh_updated_at'] < update_order['updated_at']:
+                dict_update_orders[update_order['id']] = {'created_at': update_order['created_at'],
+                                                    'updated_at': update_order['updated_at']
+                                                    }
     return dict_new_orders, date_created# + dict_update_orders (set after dict_new_orders)
 
 
@@ -92,10 +96,10 @@ if __name__=='__main__':
             loop_value += 1
             if loop_value>=5:
                 loop_value = -1
-                orders_list = get_orders_list()
+                orders_dict = get_orders_dict()
             print('Sleeping for {0} seconds...'.format(sleep_time))
             time.sleep(sleep_time)
-            dict_new_orders, date_created = get_woocommerce_orders(date_created, date_updated, orders_list)
+            dict_new_orders, date_created = get_woocommerce_orders(date_created, date_updated, orders_dict)
             produce_data(dict_new_orders)
     except KeyboardInterrupt:
         pass
