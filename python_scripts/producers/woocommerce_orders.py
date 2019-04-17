@@ -20,9 +20,9 @@ def delivery_report(err, msg):
     """ Called once for each message produced to indicate delivery result.
         Triggered by poll() or flush(). """
     if err is not None:
-        print('Message delivery failed: {}'.format(err))
+        print('Message delivery failed: {0}'.format(err))
     else:
-        print('Message delivered to {} [{}]'.format(msg.topic(), msg.partition()))
+        print('Message delivered to {0} [{1}]'.format(msg.topic(), msg.partition()))
 
 
 def produce_data(dict_new_orders):
