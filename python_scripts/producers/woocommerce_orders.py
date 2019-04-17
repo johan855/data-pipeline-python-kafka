@@ -39,13 +39,19 @@ def produce_data(dict_new_orders):
 
 
 def get_last_updated_at():
-    query = """SELECT MAX(date_created) as date_created, MAX(date_modified) as date_modified
-               FROM woocommerce_en_de.orders;"""
-    query_result = session.execute(query).fetchall()
-    date_created = '2019-01-01T00:00:00' if query_result[0][0] == None else query_result[0][0]
-    date_updated = '2019-01-01T00:00:00' if query_result[0][0] == None else query_result[0][1]
+    query_dates = """SELECT MAX(date_created) as date_created, MAX(date_modified) as date_modified
+                     FROM woocommerce_en_de.orders;"""
+    query_dates_result = session.execute(query_dates).fetchall()
+    date_created = '2019-01-01T00:00:00' if query_dates_result[0][0] == None else query_dates_result[0][0]
+    date_updated = '2019-01-01T00:00:00' if query_dates_result[0][0] == None else query_dates_result[0][1]
     return date_created, date_updated
 
+
+def get_orders_list():
+    query_orders_list = """SELECT * FROM woocommerce_en_de.orders;"""
+    query_orders_list_result = session.execute(query_orders_list).fetchall()
+    orders_list = query_orders_list_result[0]
+    return orders_list
 
 def get_woocommerce_orders(date_created, date_updated):
     key = global_configuration.Woocommerce.consumer_key
@@ -58,20 +64,20 @@ def get_woocommerce_orders(date_created, date_updated):
         timeout=10
     )
     dict_new_orders = {}
-    #dict_update_orders = {}
+    dict_update_orders = {}
     pages = 1
     for x in range(1, pages+1):
         r_new = wcapi.get("orders?per_page=100&page={0}&after={1}".format(x, date_created)).json()
-        #r_update = wcapi.get("orders?page={0}&after_update={1}".format(x, date_updated)).json()
+        r_update = wcapi.get("orders?per_page=100&page={0}&after_update={1}".format(x, date_updated)).json()
         for new_order in r_new:
             date_created = new_order['date_created'] if new_order['date_created'] >= date_created else date_created
             dict_new_orders[new_order['id']] = {'created_at': new_order['date_created'],
-                                                #'updated_at': new_order['date_updated']
+                                                'updated_at': new_order['date_updated']
                                                 }
-        #for update_order in r_update:
-        #    dict_update_orders[update_order['id']] = {'created_at': update_order['created_at'],
-        #                                        'updated_at': update_order['updated_at']
-        #                                        }
+        for update_order in r_update:
+            dict_update_orders[update_order['id']] = {'created_at': update_order['created_at'],
+                                                'updated_at': update_order['updated_at']
+                                                }
     return dict_new_orders, date_created# + dict_update_orders (set after dict_new_orders)
 
 
@@ -80,11 +86,16 @@ if __name__=='__main__':
     p = Producer({'bootstrap.servers': 'localhost:9092,localhost:9093'})
     date_created, date_updated = get_last_updated_at()
     sleep_time = 3
+    loop_value = -1
     try:
         while True:
+            loop_value += 1
+            if loop_value>=5:
+                loop_value = -1
+                orders_list = get_orders_list()
             print('Sleeping for {0} seconds...'.format(sleep_time))
             time.sleep(sleep_time)
-            dict_new_orders, date_created = get_woocommerce_orders(date_created, date_updated)
+            dict_new_orders, date_created = get_woocommerce_orders(date_created, date_updated, orders_list)
             produce_data(dict_new_orders)
     except KeyboardInterrupt:
         pass
