@@ -71,18 +71,18 @@ def get_woocommerce_orders(date_created, date_updated, orders_dict):
     pages = 1
     for x in range(1, pages+1):
         r_new = wcapi.get("orders?per_page=100&page={0}&after={1}".format(x, date_created)).json()
-        r_update = wcapi.get("orders?per_page=100&page={0}&after_update={1}".format(x, date_updated)).json()
+        r_update = wcapi.get("orders?per_page=100&page={0}&before={1}".format(x, date_created)).json()
         for new_order in r_new:
-            date_created = new_order['date_created'] if new_order['date_created'] >= date_created else date_created
+            date_created = new_order['date_created_gmt'] if new_order['date_created_gmt'] >= date_created else date_created
             dict_new_orders[new_order['id']] = {'created_at': new_order['date_created'],
                                                 'updated_at': new_order['date_updated']
                                                 }
         for update_order in r_update:
-            if orders_dict[update_order['id']]['dwh_updated_at'] < update_order['updated_at']:
-                dict_update_orders[update_order['id']] = {'created_at': update_order['created_at'],
-                                                    'updated_at': update_order['updated_at']
+            if update_order['date_modified_gmt'] < orders_dict[update_order['id']]['dwh_updated_at']:
+                dict_update_orders[update_order['id']] = {'created_at': update_order['date_created_gmt'],
+                                                    'updated_at': update_order['date_modified_gmt']
                                                     }
-    return dict_new_orders, date_created# + dict_update_orders (set after dict_new_orders)
+    return dict_new_orders + dict_update_orders, date_created
 
 
 if __name__=='__main__':
@@ -93,8 +93,10 @@ if __name__=='__main__':
     loop_value = -1
     try:
         while True:
+            orders_dict = []
             loop_value += 1
             if loop_value>=5:
+                # Load orders only every 5th iteration
                 loop_value = -1
                 orders_dict = get_orders_dict()
             print('Sleeping for {0} seconds...'.format(sleep_time))
