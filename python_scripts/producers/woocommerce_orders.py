@@ -6,6 +6,7 @@ import os
 import sys
 import time
 import logging
+from datetime import datetime as dt
 from woocommerce import API
 from confluent_kafka import Producer
 
@@ -51,8 +52,8 @@ def get_orders_dict():
     orders_dict = {}
     query_orders_list = """SELECT * FROM woocommerce_en_de.orders;"""
     query_orders_list_result = session.execute(query_orders_list).fetchall()
-    orders_list = query_orders_list_result[0]
-    if len(orders_list) > 0:
+    if len(query_orders_list_result) > 0:
+        orders_list = query_orders_list_result[0]
         for x in orders_list:
             orders_dict[x[0]]=x # Index has to be order_id
     return orders_dict
@@ -75,16 +76,25 @@ def get_woocommerce_orders(date_created, date_updated, orders_dict):
         r_new = wcapi.get("orders?per_page=100&page={0}&after={1}".format(x, date_created)).json()
         r_update = wcapi.get("orders?per_page=100&page={0}&before={1}".format(x, date_created)).json()
         for new_order in r_new:
-            date_created = new_order['date_created_gmt'] if new_order['date_created_gmt'] >= date_created else date_created
-            dict_new_orders[new_order['id']] = {'date_created': new_order['date_created'],
-                                                'date_modified': new_order['date_updated']
+            new_order_date_created = dt.strptime(new_order['date_created_gmt'], "%Y-%m-%dT%H:%M:%S")
+            new_order_date_modified = dt.strptime(new_order['date_modified_gmt'], "%Y-%m-%dT%H:%M:%S")
+            date_created_date = dt.strptime(date_created, "%Y-%m-%dT%H:%M:%S")
+            date_created = new_order['date_created_gmt'] if new_order_date_created >= date_created_date else date_created
+            dict_new_orders[new_order['id']] = {'date_created': new_order['date_created_gmt'],
+                                                'date_modified': new_order['date_modified_gmt']
                                                 }
-        for update_order in r_update:
-            if update_order['date_modified_gmt'] >= orders_dict[update_order['id']]['dwh_updated_at']:
-                dict_update_orders[update_order['id']] = {'date_created': update_order['date_created_gmt'],
-                                                    'date_modified': update_order['date_modified_gmt']
-                                                    }
-    orders =  dict_new_orders + dict_update_orders
+        if len(orders_dict) > 0:
+            for update_order in r_update:
+                update_order_date_created = dt.strptime(update_order['date_created_gmt'], "%Y-%m-%dT%H:%M:%S")
+                update_order_date_modified = dt.strptime(update_order['date_modified_gmt'], "%Y-%m-%dT%H:%M:%S")
+                update_order_id = update_order['id']
+                if update_order_date_modified >= orders_dict[update_order_id]['dwh_updated_at'] \
+                        and update_order not in r_new:
+                    dict_update_orders[update_order_id] = {'date_created': update_order['date_created_gmt'],
+                                                           'date_modified': update_order['date_modified_gmt']
+                                                           }
+    orders = dict_new_orders.copy()
+    orders.update(dict_update_orders)
     return orders, date_created
 
 
@@ -102,11 +112,10 @@ if __name__=='__main__':
                 # Load orders only every 5th iteration
                 loop_value = -1
                 orders_dict = get_orders_dict()
-            if len(orders_dict) > 0:
-                print('Sleeping for {0} seconds...'.format(sleep_time))
-                time.sleep(sleep_time)
-                orders, date_created = get_woocommerce_orders(date_created, date_updated, orders_dict)
-                produce_data(orders)
+            print('Sleeping for {0} seconds...'.format(sleep_time))
+            time.sleep(sleep_time)
+            orders, date_created = get_woocommerce_orders(date_created, date_updated, orders_dict)
+            produce_data(orders)
     except KeyboardInterrupt:
         pass
 
