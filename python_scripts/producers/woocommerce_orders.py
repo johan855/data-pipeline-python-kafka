@@ -25,14 +25,14 @@ def delivery_report(err, msg):
         print('Message delivered to {0} [{1}]'.format(msg.topic(), msg.partition()))
 
 
-def produce_data(dict_new_orders):
-    for data in dict_new_orders:
+def produce_data(orders):
+    for data in orders:
         # Trigger any available delivery report callbacks from previous produce() calls
         p.poll(0)
         # Asynchronously produce a message, the delivery report callback
         # will be triggered from poll() above, or flush() below, when the message has
         # been successfully delivered or failed permanently.
-        p.produce('woocommerce_orders', str(dict_new_orders[data]).encode('utf-8'), callback=delivery_report)
+        p.produce('woocommerce_orders', str(orders[data]).encode('utf-8'), callback=delivery_report)
         # Wait for any outstanding messages to be delivered and delivery report
         # callbacks to be triggered.
     p.flush()
@@ -52,11 +52,13 @@ def get_orders_dict():
     query_orders_list = """SELECT * FROM woocommerce_en_de.orders;"""
     query_orders_list_result = session.execute(query_orders_list).fetchall()
     orders_list = query_orders_list_result[0]
-    for x in orders_list:
-        orders_dict[x[0]]=x # Index has to be order_id
+    if len(orders_list) > 0:
+        for x in orders_list:
+            orders_dict[x[0]]=x # Index has to be order_id
     return orders_dict
 
 def get_woocommerce_orders(date_created, date_updated, orders_dict):
+    """Date updated still unused, need to include when updated_at is available in WC API"""
     key = global_configuration.Woocommerce.consumer_key
     secret = global_configuration.Woocommerce.consumer_secret
     url = global_configuration.Woocommerce.url
@@ -74,15 +76,16 @@ def get_woocommerce_orders(date_created, date_updated, orders_dict):
         r_update = wcapi.get("orders?per_page=100&page={0}&before={1}".format(x, date_created)).json()
         for new_order in r_new:
             date_created = new_order['date_created_gmt'] if new_order['date_created_gmt'] >= date_created else date_created
-            dict_new_orders[new_order['id']] = {'created_at': new_order['date_created'],
-                                                'updated_at': new_order['date_updated']
+            dict_new_orders[new_order['id']] = {'date_created': new_order['date_created'],
+                                                'date_modified': new_order['date_updated']
                                                 }
         for update_order in r_update:
-            if update_order['date_modified_gmt'] < orders_dict[update_order['id']]['dwh_updated_at']:
-                dict_update_orders[update_order['id']] = {'created_at': update_order['date_created_gmt'],
-                                                    'updated_at': update_order['date_modified_gmt']
+            if update_order['date_modified_gmt'] >= orders_dict[update_order['id']]['dwh_updated_at']:
+                dict_update_orders[update_order['id']] = {'date_created': update_order['date_created_gmt'],
+                                                    'date_modified': update_order['date_modified_gmt']
                                                     }
-    return dict_new_orders + dict_update_orders, date_created
+    orders =  dict_new_orders + dict_update_orders
+    return orders, date_created
 
 
 if __name__=='__main__':
@@ -90,7 +93,7 @@ if __name__=='__main__':
     p = Producer({'bootstrap.servers': 'localhost:9092,localhost:9093'})
     date_created, date_updated = get_last_updated_at()
     sleep_time = 3
-    loop_value = -1
+    loop_value = 0
     try:
         while True:
             orders_dict = []
@@ -99,10 +102,11 @@ if __name__=='__main__':
                 # Load orders only every 5th iteration
                 loop_value = -1
                 orders_dict = get_orders_dict()
-            print('Sleeping for {0} seconds...'.format(sleep_time))
-            time.sleep(sleep_time)
-            dict_new_orders, date_created = get_woocommerce_orders(date_created, date_updated, orders_dict)
-            produce_data(dict_new_orders)
+            if len(orders_dict) > 0:
+                print('Sleeping for {0} seconds...'.format(sleep_time))
+                time.sleep(sleep_time)
+                orders, date_created = get_woocommerce_orders(date_created, date_updated, orders_dict)
+                produce_data(orders)
     except KeyboardInterrupt:
         pass
 
