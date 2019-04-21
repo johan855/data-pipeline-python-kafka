@@ -79,19 +79,22 @@ def get_woocommerce_orders(date_created, date_updated, orders_dict):
             new_order_date_created = dt.strptime(new_order['date_created_gmt'], "%Y-%m-%dT%H:%M:%S")
             new_order_date_modified = dt.strptime(new_order['date_modified_gmt'], "%Y-%m-%dT%H:%M:%S")
             date_created_date = dt.strptime(date_created, "%Y-%m-%dT%H:%M:%S")
+            new_order_id = str(new_order['id'])
             date_created = new_order['date_created_gmt'] if new_order_date_created >= date_created_date else date_created
-            dict_new_orders[new_order['id']] = {'date_created': new_order['date_created_gmt'],
-                                                'date_modified': new_order['date_modified_gmt']
+            dict_new_orders[new_order_id] = {"id": new_order_id,
+                                                "date_created": new_order['date_created_gmt'],
+                                                "date_modified": new_order['date_modified_gmt']
                                                 }
         if len(orders_dict) > 0:
             for update_order in r_update:
                 update_order_date_created = dt.strptime(update_order['date_created_gmt'], "%Y-%m-%dT%H:%M:%S")
                 update_order_date_modified = dt.strptime(update_order['date_modified_gmt'], "%Y-%m-%dT%H:%M:%S")
-                update_order_id = update_order['id']
+                update_order_id = str(update_order['id'])
                 if update_order_date_modified >= orders_dict[update_order_id]['dwh_updated_at'] \
                         and update_order not in r_new:
-                    dict_update_orders[update_order_id] = {'date_created': update_order['date_created_gmt'],
-                                                           'date_modified': update_order['date_modified_gmt']
+                    dict_update_orders[update_order_id] = {"id": update_order_id,
+                                                           "date_created": update_order['date_created_gmt'],
+                                                           "date_modified": update_order['date_modified_gmt']
                                                            }
     orders = dict_new_orders.copy()
     orders.update(dict_update_orders)
@@ -112,7 +115,7 @@ if __name__=='__main__':
                 # Load orders only every 5th iteration
                 loop_value = -1
                 orders_dict = get_orders_dict()
-            print('Sleeping for {0} seconds...'.format(sleep_time))
+            #print('Sleeping for {0} seconds...'.format(sleep_time))
             time.sleep(sleep_time)
             orders, date_created = get_woocommerce_orders(date_created, date_updated, orders_dict)
             produce_data(orders)

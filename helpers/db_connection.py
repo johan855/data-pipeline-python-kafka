@@ -59,7 +59,7 @@ class DBconnection():
     @staticmethod
     def get_hash_id(*args):
         tomd5 = "".join(str(args))
-        id_hash = hashlib.md5(tomd5).hexdigest()
+        id_hash = hashlib.md5(tomd5.encode('utf8')).hexdigest()
         return id_hash
 
     @staticmethod

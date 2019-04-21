@@ -32,7 +32,7 @@ class Orders(db_conn.get_base()):
 
     hash_id = Column(String(32), primary_key=True)
 
-    order_id = Column(String(5))
+    order_id = Column(String(10))
     date_created = Column(DateTime(timezone=False))
     date_modified = Column(DateTime(timezone=False))
 
