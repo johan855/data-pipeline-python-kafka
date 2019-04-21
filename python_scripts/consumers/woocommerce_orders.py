@@ -11,7 +11,7 @@ from python_scripts.database.woocommerce_tables import create_tables, session, O
 def load_to_db(msg):
     data = json.loads(msg.value().decode('utf8').replace("'",'"'))
     orders_data = Orders(
-                         order_id=data['id'],
+                         order_id=data['order_id'],
                          date_created=data['date_created'],
                          date_modified=data['date_modified']
                          )
@@ -31,7 +31,6 @@ if __name__=='__main__':
     c.subscribe(['woocommerce_orders'])
     while True:
         msg = c.poll(1.0)
-
         if msg is None:
             continue
         if msg.error():
