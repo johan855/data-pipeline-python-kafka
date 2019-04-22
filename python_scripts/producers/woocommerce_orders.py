@@ -91,7 +91,7 @@ def get_woocommerce_orders(date_created, date_updated, orders_dict):
             new_order_id = str(new_order['id'])
             new_date_created = dt.strptime(new_order['date_created_gmt'], "%Y-%m-%dT%H:%M:%S")
             date_created = new_date_created if new_order_date_created >= date_created else date_created
-            dict_new_orders[new_order_id] = {"id": new_order_id,
+            dict_new_orders[new_order_id] = {"order_id": new_order_id,
                                              "date_created": new_order['date_created_gmt'],
                                              "date_modified": new_order['date_modified_gmt']
                                              }
@@ -101,12 +101,13 @@ def get_woocommerce_orders(date_created, date_updated, orders_dict):
                 if update_order_id in orders_dict:
                     update_order_date_created = dt.strptime(update_order['date_created_gmt'], "%Y-%m-%dT%H:%M:%S")
                     update_order_date_modified = dt.strptime(update_order['date_modified_gmt'], "%Y-%m-%dT%H:%M:%S")
-                    if orders_dict[update_order_id]['dwh_updated_at'] != None:
-                        orders_dict_date_modified = orders_dict[update_order_id]['dwh_updated_at']
+                    if orders_dict[update_order_id]['date_modified'] != None:
+                        orders_dict_date_modified = orders_dict[update_order_id]['date_modified']
                     else:
-                        orders_dict_date_modified = dt.now() + timedelta(days=1)
+                        # Assign -1 day so next first condition always True
+                        orders_dict_date_modified = update_order_date_modified - timedelta(days=1)
                     if update_order_date_modified >= orders_dict_date_modified and update_order not in r_new:
-                        dict_update_orders[update_order_id] = {"id": update_order_id,
+                        dict_update_orders[update_order_id] = {"order_id": update_order_id,
                                                                "date_created": update_order['date_created_gmt'],
                                                                "date_modified": update_order['date_modified_gmt']
                                                                }
