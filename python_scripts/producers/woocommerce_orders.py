@@ -106,7 +106,8 @@ def get_woocommerce_orders(date_created, date_updated, orders_dict):
                     else:
                         # Assign -1 day so next first condition always True
                         orders_dict_date_modified = update_order_date_modified - timedelta(days=1)
-                    if update_order_date_modified >= orders_dict_date_modified and update_order not in r_new:
+                    if update_order_date_modified > orders_dict_date_modified and update_order not in r_new:
+                        # Check if > condition is enough (it was => before)
                         dict_update_orders[update_order_id] = {"order_id": update_order_id,
                                                                "date_created": update_order['date_created_gmt'],
                                                                "date_modified": update_order['date_modified_gmt']
