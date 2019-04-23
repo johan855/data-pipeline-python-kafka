@@ -16,5 +16,9 @@ python ./create_producer.py
 # kafka-console-consumer.sh --bootstrap-server localhost:9092 --topic woocommerce_orders
 python ./create_consumer.py
 
+
+# Initialize KSQL
+ksql-cli local
+
 ## Things to improve ##
 # Make sure the nohup + & commands run properly

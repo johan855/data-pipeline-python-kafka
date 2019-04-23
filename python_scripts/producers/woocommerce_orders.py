@@ -5,6 +5,7 @@
 import os
 import sys
 import time
+import json
 import logging
 from woocommerce import API
 from datetime import timedelta
@@ -35,7 +36,7 @@ def produce_data(orders):
         # Asynchronously produce a message, the delivery report callback
         # will be triggered from poll() above, or flush() below, when the message has
         # been successfully delivered or failed permanently.
-        p.produce('woocommerce_orders', str(orders[data]).encode('utf-8'), callback=delivery_report)
+        p.produce('woocommerce_orders', json.dumps(orders[data]).encode('utf-8'), callback=delivery_report)
         # Wait for any outstanding messages to be delivered and delivery report
         # callbacks to be triggered.
     p.flush()
