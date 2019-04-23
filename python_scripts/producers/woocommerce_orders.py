@@ -142,3 +142,4 @@ if __name__=='__main__':
 # Make Woocommerce send request to Python script (Webhook on order create and update)
 # Use pandas to zip dict keys
 # Fix offset management (What happens if the process breaks? will all messages have to be reloaded from the start?)
+# Check why producer only kicks in on create order (doesnt produce only updates until an orders is created)
