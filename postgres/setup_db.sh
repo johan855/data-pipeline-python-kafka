@@ -15,3 +15,8 @@ docker run --rm --name pg-docker \
 #docker exec --tty --interactive pg-docker /bin/bash
 #su -c "psql -c \"CREATE USER postgresuser WITH LOGIN PASSWORD 'postgrespassword';\"" postgres
 
+
+docker run --rm --name pg-docker \
+           -e POSTGRES_PASSWORD=postgrespassword \
+           -d -p 5432:5432 \
+           -v $HOME/docker/volumes/postgres:/var/lib/postgresql/data postgres
