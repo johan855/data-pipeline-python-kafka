@@ -1,0 +1,7 @@
+# On ksql-cli local
+CREATE STREAM fct_orders AS
+SELECT
+order_id,
+gmv_eur/1.19 as nmv_eur
+FROM orders_stream
+;
