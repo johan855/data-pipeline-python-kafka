@@ -1,4 +1,13 @@
 # On ksql-cli local
+CREATE STREAM orders AS
+SELECT
+*
+FROM woocommerce_orders
+WITH (
+
+)
+;
+
 CREATE STREAM fct_orders AS
 SELECT
 order_id,
