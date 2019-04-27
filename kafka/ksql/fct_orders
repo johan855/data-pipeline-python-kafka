@@ -1,12 +1,13 @@
 # On ksql-cli local
-CREATE STREAM orders AS
-SELECT
-*
-FROM woocommerce_orders
-WITH (
 
-)
-;
+CREATE STREAM orders (
+order_id integer,
+date_created timestamp,
+date_modified timestamp
+) WITH (
+kafka_topic='woocommerce_orders',
+value_format='JSON'
+);
 
 CREATE STREAM fct_orders AS
 SELECT
@@ -14,3 +15,11 @@ order_id,
 gmv_eur/1.19 as nmv_eur
 FROM orders_stream
 ;
+
+CREATE TABLE top_level_report AS
+SELECT
+*
+FROM fct_orders
+WITH (
+KEY='order_id'
+);
