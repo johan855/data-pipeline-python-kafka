@@ -1,0 +1,20 @@
+
+flink-master:
+   image: bde2020/flink-master:1.7.2-hadoop2.8
+   hostname: flink-master
+   container_name: flink-master
+   environment:
+      - INIT_DAEMON_STEP=setup_flink
+
+   ports:
+     - "8080:8080"
+     - "8081:8081"
+
+ flink-worker:
+   image: bde2020/flink-worker:1.7.2-hadoop2.8
+   hostname: flink-worker
+   container_name: flink-worker
+   environment:
+     - FLINK_MASTER_PORT_6123_TCP_ADDR=flink-master
+   depends_on:
+      - "flink-master"
