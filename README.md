@@ -1,4 +1,4 @@
-Python-Kafka data pipeline for Woocommerce
+Python-Kafka data pipeline for Woocommerce (Under construction)
 ==========================
 
 This repo contains the necessary scripts to install and deploy Kafka as the main ETL
